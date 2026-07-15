@@ -32,6 +32,11 @@
     boot.initrd.kernelModules = [ "overlay" ];
     boot.kernelModules = [ "nf_tables" ];
 
+    boot.kernel.sysctl = {
+      "user.max_user_namespaces" = 0;
+      "kernel.modules_disabled" = 1;
+    };
+
     boot.initrd.supportedFilesystems = [ "ext4" ];
 
     # Set up the /nix/store overlay and /nix/var bind in initrd. Runs after
@@ -494,6 +499,9 @@
           TTYPath = "/dev/ttyS0";
           TTYReset = true;
           TTYVHangup = false;
+          SystemCallFilter = "~kexec_load ~kexec_file_load ~bpf ~create_module ~init_module ~finit_module ~add_key ~request_key ~iopl ~ioperm ~acct ~clock_settime ~mount ~umount2 ~pivot_root ~chroot ~reboot ~swapoff ~swapon ~ptrace ~unshare";
+          SystemCallArchitectures = "native";
+          NoNewPrivileges = "yes";
           ExecStart = "${launcher}";
           ExecStopPost = "+${pkgs.systemd}/bin/systemctl poweroff --force --force";
         };
