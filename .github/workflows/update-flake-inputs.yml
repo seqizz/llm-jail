@@ -14,30 +14,39 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Update claude-code-nix
-        run: nix flake update claude-code-nix
-
-      - name: Update codex-cli-nix
-        run: nix flake update codex-cli-nix
-
-      - name: Update llm-agents.nix
-        run: nix flake update llm-agents
+      - name: Update flake inputs
+        run: |
+          {
+            nix flake update claude-code-nix
+            nix flake update codex-cli-nix
+            nix flake update llm-agents
+            nix flake update autolith
+          } 2>&1 | tee /tmp/update-output.txt
+          {
+            echo "UPDATE_OUTPUT<<EOF"
+            cat /tmp/update-output.txt
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Create pull request
         id: create-pr
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: "flake: update claude-code-nix, codex-cli-nix, and llm-agents.nix inputs"
-          title: "flake: update claude-code-nix, codex-cli-nix, and llm-agents.nix inputs"
+          commit-message: |
+            flake: update claude-code-nix, codex-cli-nix, llm-agents.nix, and autolith inputs
+
+            ${{ env.UPDATE_OUTPUT }}
+          title: "flake: update claude-code-nix, codex-cli-nix, llm-agents.nix, and autolith inputs"
           body: |
             Automated daily update of flake inputs:
             - `claude-code-nix`
             - `codex-cli-nix`
             - `llm-agents.nix`
+            - `autolith`
           branch: auto-update-flake-inputs
           delete-branch: true
 
